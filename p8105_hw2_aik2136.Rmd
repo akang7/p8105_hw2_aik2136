@@ -9,38 +9,38 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 ```
 
-# Problem 1
+## Problem 1
 This problem focuses on NYC Transit data on entrances and exits of each subway station in NYC
 
-## Reading and cleaning data
+### Reading and cleaning data
 
 * Read and clean the data
-* Retain line, station, name, station latitude/longitude, routes served, entry, vending, entrance type, and ADA compliance. 
+* Retain line, station name, station latitude/longitude, routes served, entry, vending, entrance type, and ADA compliance. 
 * Convert the entry variable from character (YES vs NO) to a logical variable 
 ```{r read_clean_1}
 nyc_transit = read_csv(file = "./data/NYC_Transit_Subway_Entrance_And_Exit_Data.csv") %>%
   janitor::clean_names() %>%
-  select("line", "station_name", "station_latitude", "station_longitude", "route1", "route2",
-         "route3", "route4", "route5", "route6", "route7", "route8", "route9", "route10", 
-         "route11", "entry", "vending", "entrance_type", "ada") %>% 
+  select("line", "station_name", "station_latitude", "station_longitude", "route1":"route11", "entry", "vending", "entrance_type", "ada") %>% 
   mutate(entry = recode(entry, YES = TRUE, NO = FALSE))
 ```
 
-The `nyc_transit` dataset contains `r nrow(nyc_transit)` rows and `r ncol(nyc_transit)` columns. This dataset consists of character variables such as `line` and `station_name` that describe the name of the station and where the line runs and coordinate variables (numeric) such as `station_latitutde` and `station_longitude` that describe the location of the entrance/exit of each station. Variables `route1` - `route11` (some character, some integers) tell us which trains (e.g. A, B, Q, 4, etc.) run through each station. Other variables including `vending` (character), `entrance_type`(character), `ada` (logical) and `entry` - which was converted from a character variable to a logical variable - were also included in the dataset. The dataset was read in and `janitor::clean_names()` was utilized to clean the variable names. Next, `select` was implemented to select the above variables. Lastly, the `entry` variable was converted from a character to a logical variable by using `mutate` and `recode`. Yes, the data are tidy.
+The `nyc_transit` dataset contains **`r nrow(nyc_transit)` rows** and **`r ncol(nyc_transit)` columns**. This dataset consists of character variables such as `line` and `station_name` that describe the name of the station and where the line runs and coordinate variables (numeric) such as `station_latitutde` and `station_longitude` that describe the location of the entrance/exit of each station. Variables `route1` - `route11` (some character, some integers) tell us which trains (e.g. A, B, Q, 4, etc.) run through each station. Other variables including `vending` (character), `entrance_type`(character), `ada` (logical) and `entry` - which was converted from a character variable to a logical variable - were also included in the dataset.  
+
+The dataset was read in and `janitor::clean_names()` was utilized to clean the variable names. Next, `select` was implemented to select the above variables. Lastly, the `entry` variable was converted from a character to a logical variable by using `mutate` and `recode`. Yes, the data are tidy.
 
 #### Answer the following questions:
 ##### How many distinct stations are there?
 ```{r distinct_stations_1}
 dist_num_station = (distinct(nyc_transit, station_name, line))
 ```
-There are `r nrow(dist_num_station)` distinct stations.
+There are **`r nrow(dist_num_station)`** distinct stations.
 
 ##### How many stations are ADA compliant?
 ```{r distinct_ada_1}
 ada_station = distinct(nyc_transit, station_name, line, ada) %>%
   filter(ada == TRUE)
 ```
-There are `r nrow(ada_station)` distinct ADA compliant stations.
+There are **`r nrow(ada_station)`** distinct ADA compliant stations.
 
 ##### What proportion of station entrances/exits without vending allow entrance?
 ```{r no_vending_allow_entrance_1}
@@ -48,4 +48,25 @@ no_vending = filter(nyc_transit, vending == "NO")
 allow_entrance = filter(no_vending, entry == TRUE)
 ```
 
-The proportion of station entrances/exits without vending that allow entrance is `r nrow(allow_entrance)/nrow(no_vending)` (= 37.7%).
+The proportion of station entrances/exits without vending that allow entrance is **`r nrow(allow_entrance)/nrow(no_vending)`** (= **37.7%**).
+
+### Reformatting data
+Reformat so that route number and route name are distinct variables
+```{r reformatting_1}
+route_reformat = nyc_transit %>%
+  gather(key = route_number, value = route_name, route1:route11)
+```
+
+##### How many distinct stations serve the A train?
+```{r distinct_a_1}
+dist_a_station = distinct(route_reformat, line, station_name, .keep_all = TRUE) %>%
+  filter(route_name == "A")
+```
+There are **`r nrow(dist_a_station)`** distinct stations that serve the A train.
+
+##### Of the stations that serve the A train, how many are ADA compliant?
+```{r}
+dist_ada_a_station = filter(dist_a_station, ada == TRUE)
+```
+
+Of the distinct stations that serve the A train, there are **`r  nrow(dist_ada_a_station)`** ADA compliant stations.
