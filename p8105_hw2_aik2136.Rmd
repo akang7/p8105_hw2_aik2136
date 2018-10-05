@@ -218,8 +218,6 @@ median_excellent_2002 = brfss_data %>%
 The median excellent response value in 2002 is **`r median_excellent_2002`**.
 
 ##### Make a histogram of “Excellent” response values in the year 2002. 
-Below is a histogram of "Excellent" response values
-
 ```{r histogram_excellent_3}
 brfss_data %>% 
   filter(year == 2002) %>% 
