@@ -82,7 +82,7 @@ This problem uses the Mr. Trash Wheel dataset
 * Round the number of sports balls to the nearest integer and converts the result to an integer variable
 
 ```{r read_clean_2}
-trashwheel = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "Mr. Trash Wheel", range = cellranger::cell_cols("A:N")) %>%
+trash_wheel = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = "Mr. Trash Wheel", range = cellranger::cell_cols("A:N")) %>%
   janitor::clean_names() %>%
   filter(!is.na(dumpster)) %>%
   mutate(sports_balls = round(sports_balls)) %>%
@@ -95,7 +95,7 @@ Omit rows without precipitation data and add a variable year
 
 ##### Precipitation data (2016)
 ```{r read_clean_precipit_2016_2}
-precipit_16 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "2016 Precipitation", range = cellranger::cell_cols("A:B")) %>%
+precipit_16 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = "2016 Precipitation", range = cellranger::cell_cols("A:B")) %>%
   janitor::clean_names() 
 
 names(precipit_16) = precipit_16[1,]  
@@ -109,7 +109,7 @@ precipit_2016 = precipit_16 %>%
 
 ##### Precipitation data (2017)
 ```{r read_clean_precipit_2017_2}
-precipit_17 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2017-9-26.xlsx", sheet = "2017 Precipitation", range = cellranger::cell_cols("A:B")) %>%
+precipit_17 = readxl::read_excel("./data/HealthyHarborWaterWheelTotals2018-7-28.xlsx", sheet = "2017 Precipitation", range = cellranger::cell_cols("A:B")) %>%
   janitor::clean_names() 
 
 names(precipit_17) = precipit_17[1,]  
@@ -126,14 +126,28 @@ precipit_2017 = precipit_17 %>%
 precipit_combined = left_join(precipit_2016, precipit_2017, by = "Month") %>%
   rename(Total_2016 = Total.x, Total_2017 = Total.y) %>%
   select(-Year.x, -Year.y) %>%
-  mutate(Month = month.name)
+  mutate(Month = month.name) %>% 
+  mutate(Total_2016 = as.numeric(Total_2016)) %>% 
+  mutate(Total_2017 = as.numeric(Total_2017))
 ```
 
+##### Variables for descriptive statistics
 ```{r trashwheel_descriptive_statistics_2}
+total_tons = trash_wheel %>% 
+  pull(weight_tons) %>% 
+  sum(na.rm = TRUE)
 
+total_homes_powered = trash_wheel %>% 
+  pull(homes_powered) %>% 
+  sum(na.rm = TRUE) %>% 
+  round()
 
+sports_balls_2016 = trash_wheel %>% 
+  filter(year == 2016) %>% 
+  pull(sports_balls) %>% 
+  median(na.rm = TRUE)
 ```
 
-The `trashwheel` dataset contains **`r nrow(trashwheel)` rows** and **`r ncol(trashwheel)` columns**. This dataset consists of variables such as `dumpster`, `month`, `year` and `date` that describe the dumpster number and trash collection dates. Variables such as `weight_tons` and `volume_cubic_yards` describe the dimensions/properties of the contents of dumpster and variables such as `plastic_bottles`, `polystyrene`, `cigarette_butts`, `glass_bottles`, `grocery_bags`, `chip_bags`,, and `sports_balls` describe the litter type. Lastly, `homes_powered` describe the number of homes in Maryland that can be powered by the energy that is created from incinerating the trash.  
+The `trashwheel` dataset contains **`r nrow(trash_wheel)` observations** and **`r ncol(trash_wheel)` variables**. This dataset consists of variables such as `dumpster`, `month`, `year` and `date` that describe the dumpster number and trash collection dates. Variables such as `weight_tons` and `volume_cubic_yards` describe the dimensions/properties of the contents of dumpster and variables such as `plastic_bottles`, `polystyrene`, `cigarette_butts`, `glass_bottles`, `grocery_bags`, `chip_bags`, and `sports_balls` describe the litter type. `homes_powered` describe the number of homes in Maryland that can be powered by the energy that is created from incinerating the trash. The *median* number of sports balls in a dumpster in 2016 was **`r sports_balls_2016`**. Mr. Trash Wheel has collected **`r total_tons`** tons of trash from May 2016 to the end of July 2018 and has powered **`r total_homes_powered`** homes in Maryland. 
 
-The `precipit_2016` dataset contains **`r nrow(precipit_2016)` rows** and **`r ncol(precipit_2016)` columns**.
+The `precipit_2016` dataset contains **`r nrow(precipit_2016)` observations** and the `precipit_2017` dataset contains **`r nrow(precipit_2017)` observations**. The key variables are `month`, `Total_2016`, and `Total_2017`. The total precipitation in 2017 is **`r sum(precipit_combined$Total_2017)`**
