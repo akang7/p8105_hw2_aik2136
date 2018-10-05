@@ -7,6 +7,13 @@ output: github_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
+
+# For plots in question 3
+knitr::opts_chunk$set(
+  fig.width = 6,
+  fig.asp = .6,
+  out.width = "90%"
+)
 ```
 
 ## Problem 1
@@ -153,4 +160,80 @@ The `trashwheel` dataset contains **`r nrow(trash_wheel)` observations** and **`
 The `precipit_2016` dataset contains **`r nrow(precipit_2016)` observations** and the `precipit_2017` dataset contains **`r nrow(precipit_2017)` observations**. The key variables are `month`, `Total_2016`, and `Total_2017`. The total precipitation in 2017 is **`r sum(precipit_combined$Total_2017)`**
 
 ## Problem 3
+This problem uses the BRFSS data 
+
+##### Loading BRFSS data from `p8105.datasets` package
+
+```{r loading_data_3}
+devtools::install_github("p8105/p8105.datasets")
+
+library(p8105.datasets)
+data(brfss_smart2010)
+```
+
+##### Formating BRFSS dataset
+
+* Format the data to use appropriate variable names
+* Focus on the “Overall Health” topic
+* Exclude variables for class, topic, question, sample size, and everything from lower confidence limit to GeoLocation
+* Structure data so that values for Response (“Excellent” to “Poor”) are column names / variables which indicate the proportion of subjects with each response (which are values of Data_value in the original dataset)
+* Create a new variable showing the proportion of responses that were “Excellent” or “Very Good”
+
+```{r formatting_3}
+brfss = brfss_smart2010 %>% 
+  janitor::clean_names() %>% 
+  filter(topic == "Overall Health") %>% 
+  select(-class, -topic, -question, -sample_size, -(confidence_limit_low:geo_location)) %>% 
+  spread(key = response, value = data_value) %>% 
+  janitor::clean_names() %>% 
+  mutate(prop_excellent_very_good = (excellent + very_good) / (excellent + fair + good + poor + very_good)) %>% 
+  rename(state = locationabbr, county = locationdesc)
+```
+
+#### Answer the following questions:
+##### How many unique locations are included in the dataset? Is every state represented? What state is observed the most?
+```{r unique_loc_state_3}
+# Unique locations
+distinct(brfss, county)
+
+# States that are represented
+distinct(brfss, state)
+
+# Count of states
+brfss %>% 
+  count(state)
+```
+
+There are **`r nrow(distinct(brfss, county))`** unique locations included in the dataset. **`r nrow(distinct(brfss, state))`** states are represented, which means all 50 states and Washington D.C were included in the dataset. New Jersey is the most observed state, with 146 observations in the dataset.  
+
+##### In 2002, what is the median of the “Excellent” response value? 
+
+```{r excellent_response_3}
+median_excellent_2002 = brfss %>% 
+  filter(year == 2002) %>% 
+  pull(excellent) %>% 
+  median(na.rm = TRUE)
+```
+
+The median excellent response value in 2002 is **`r median_excellent_2002`**.
+
+##### Make a histogram of “Excellent” response values in the year 2002. 
+Below is a histogram of "Excellent" response values
+
+```{r histogram_excellent_3}
+brfss %>% 
+  filter(year == 2002) %>% 
+  ggplot(aes(x = excellent)) + 
+  geom_histogram() + 
+  labs(title = "Histogram of 'Excellent' response values in 2002", x = "Proportion of 'Excellent' responses")
+```
+
+##### Make a scatterplot showing the proportion of “Excellent” response values in New York County and Queens County (both in NY State) in each year from 2002 to 2010.
+```{r scaterplot_excellent_3}
+brfss %>% 
+  filter(county == "NY - New York County" | county == "NY - Queens County") %>% 
+  ggplot(aes(x = year, y = excellent)) +
+  geom_point(aes(color = county)) +
+  labs(title = "Scatterplot of 'Excellent' response values in New York County and Queens from 2002-2010", x = "Year", y = "Proportion of 'Excellent' responses" )
+```
 
